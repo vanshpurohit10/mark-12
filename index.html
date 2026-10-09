@@ -1,0 +1,555 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>GHTW 4.0 · Project Inayaat Unfiltered</title>
+<meta name="description" content="Countdown to GHTW 4.0: Project Inayaat Unfiltered, Sunday 11 October 2026, 1:00 AM IST.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one cinematic screen. The Mark 12 core turns behind a centred title and countdown; HUD chrome (nav, brackets, pills, status) is pinned to the edges. */
+:root {
+  color-scheme: dark;
+  --bg: #05070a;            /* Mark 12 canvas */
+  --navy: #0a131d;          /* hud-bg */
+  --navy-glow: #193652;     /* hud-glow */
+  --grid: #3dd6f512;        /* hud-grid */
+  --scan: #00000038;        /* hud-scan */
+  --ink: #f5f7fa;
+  --ink-soft: #f5f7facc;
+  --ink-dim: #f5f7fa99;
+  --tint: #3dd6f5;          /* the HUD's one bright accent */
+  --tint-soft: #3dd6f526;
+  --tint-edge: #3dd6f559;
+  --tint-faint: #3dd6f50f;
+  --amber: #ffb340;
+  --gold: #ffb84d;          /* core-gold, only the core and its light use it */
+  --hot: #fff3d6;           /* core-hot */
+  --ember: #ff7a45;
+  --gold-glow: #ffb84d73;
+  --pill: #ffffff1a;
+  --pill-hover: #ffffff33;
+  --pill-edge: #ffffff33;
+  --nav: #09090bf2;
+  --nav-edge: #ffffff1a;
+  --dim: #00000066;
+  --scrim: #0000008c;
+  --clear: #00000000;
+  --vignette: #000000c7;
+  --text-shadow: #000000b3;
+
+  --font-display: "Geist", "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Cascadia Mono", Consolas, ui-monospace, monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-display);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* ---------- Nav ---------- */
+.nav {
+  position: fixed; inset: 0 0 auto 0; z-index: 50;
+  padding-top: env(safe-area-inset-top, 0px);
+  background: var(--nav);
+  border-bottom: 1px solid var(--nav-edge);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+}
+.nav-in {
+  height: 44px; padding-inline: 12px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.badge {
+  font: 700 11px/1 var(--font-display); letter-spacing: .04em;
+  color: var(--tint); background: var(--tint-soft);
+  border: 1px solid var(--tint-edge); border-radius: 6px;
+  padding: 6px 7px;
+}
+.nav-right { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.nav-item {
+  display: inline-flex; align-items: center; gap: 8px;
+  font: 500 13px/1 var(--font-display); color: var(--ink-soft);
+  padding: 9px 10px; border-radius: 8px;
+}
+.nav-item.on { color: var(--tint); background: var(--tint-soft); }
+.nav-item svg { width: 15px; height: 15px; }
+.nav-clock {
+  font: 500 11px/1 var(--font-mono); letter-spacing: .14em; color: var(--ink-dim);
+  padding: 9px 4px 9px 10px; white-space: nowrap;
+}
+
+/* ---------- Hero ---------- */
+.hero { position: relative; height: 100%; width: 100%; overflow: hidden; background: var(--navy); }
+.stage {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 50%, var(--navy-glow), var(--clear) 70%),
+    var(--navy);
+}
+.grid {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 56px 56px;
+  background-position: center center;
+  -webkit-mask-image: radial-gradient(ellipse 75% 70% at 50% 50%, #000 30%, transparent 85%);
+          mask-image: radial-gradient(ellipse 75% 70% at 50% 50%, #000 30%, transparent 85%);
+}
+#core { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+.shade {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 46% 30% at 50% 52%, var(--scrim), var(--clear) 72%),
+    radial-gradient(ellipse at center, var(--clear) 42%, var(--vignette) 100%),
+    var(--dim);
+}
+.scan {
+  position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(to bottom, var(--clear) 0 2px, var(--scan) 2px 3px);
+}
+.scan::after {
+  content: ""; position: absolute; left: 0; right: 0; height: 18%; top: -20%;
+  background: linear-gradient(to bottom, var(--clear), var(--tint-faint) 70%, var(--tint-soft) 98%, var(--clear));
+  opacity: .5;
+  animation: sweep 9s linear infinite;
+}
+@keyframes sweep { to { top: 110%; } }
+
+.flash {
+  position: absolute; inset: 0; pointer-events: none; opacity: 0;
+  background: radial-gradient(circle at 50% 52%, var(--hot), var(--gold-glow) 30%, var(--clear) 70%);
+}
+.flash.go { animation: flash 2.2s ease-out; }
+@keyframes flash { 0% { opacity: 0; } 12% { opacity: .75; } 100% { opacity: 0; } }
+
+/* Mark 12 corner brackets */
+.brackets i {
+  position: absolute; width: 22px; height: 22px; pointer-events: none;
+  border-color: var(--tint-edge); border-style: solid; border-width: 0;
+}
+.brackets i:nth-child(1) { top: 64px; left: 16px; border-top-width: 1.5px; border-left-width: 1.5px; }
+.brackets i:nth-child(2) { top: 64px; right: 16px; border-top-width: 1.5px; border-right-width: 1.5px; }
+.brackets i:nth-child(3) { bottom: 16px; left: 16px; border-bottom-width: 1.5px; border-left-width: 1.5px; }
+.brackets i:nth-child(4) { bottom: 16px; right: 16px; border-bottom-width: 1.5px; border-right-width: 1.5px; }
+
+/* ---------- Title + countdown ---------- */
+.content {
+  position: absolute; inset: 0; z-index: 10;
+  display: flex; align-items: center; justify-content: center;
+  padding: 56px 16px 0;
+  pointer-events: none;
+}
+.block { display: flex; flex-direction: column; align-items: center; gap: 24px; text-align: center; }
+.heading { max-width: 64rem; display: grid; gap: 8px; }
+h1 {
+  margin: 0;
+  font: 700 clamp(1.3rem, 4.6vw, 1.875rem)/1.2 var(--font-display);
+  text-transform: uppercase; letter-spacing: .12em;
+  text-wrap: balance; opacity: .95;
+  text-shadow: 0 2px 24px var(--text-shadow);
+  animation: settle 2.4s cubic-bezier(.2,.7,.2,1) both;
+}
+@keyframes settle { from { letter-spacing: .32em; opacity: .35; filter: blur(6px); } to { letter-spacing: .12em; opacity: .95; filter: blur(0); } }
+.sub {
+  margin: 0;
+  font: 500 clamp(.7rem, 2.6vw, .875rem)/1.4 var(--font-display);
+  text-transform: uppercase; letter-spacing: .3em; color: var(--ink);
+  opacity: .7; text-shadow: 0 1px 12px var(--text-shadow);
+}
+
+.timer { display: flex; align-items: flex-start; gap: clamp(.45rem, 2.4vw, 1rem); }
+.unit { display: flex; flex-direction: column; align-items: center; }
+.num, .sep {
+  font: 700 clamp(2.3rem, 10.5vw, 3.75rem)/1 var(--font-display);
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 2px 28px var(--text-shadow);
+}
+.num { letter-spacing: .05em; }
+.sep { opacity: .6; }
+.lab {
+  margin-top: 8px;
+  font: 300 clamp(.62rem, 2.5vw, .875rem)/1 var(--font-display);
+  text-transform: uppercase; letter-spacing: .3em; opacity: .8;
+  padding-left: .3em; /* balance the trailing tracking */
+}
+.num.bump { animation: bump .45s ease-out; }
+@keyframes bump { from { opacity: .3; filter: blur(3px); transform: translateY(-.06em); } to { opacity: 1; filter: blur(0); transform: none; } }
+
+.hero.final .num { color: var(--hot); }
+.hero.live .num { color: var(--hot); text-shadow: 0 0 22px var(--gold-glow), 0 2px 28px var(--text-shadow); }
+
+/* ---------- Edge controls ---------- */
+.dock {
+  position: absolute; z-index: 20; left: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  display: flex; flex-direction: column; align-items: flex-start; gap: 8px;
+}
+.pill {
+  display: inline-flex; align-items: center; gap: 8px;
+  font: 500 12px/1 var(--font-display); color: var(--ink);
+  background: var(--pill); border: 1px solid var(--pill-edge); border-radius: 999px;
+  padding: 9px 12px; cursor: pointer; text-decoration: none;
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  transition: background .2s;
+}
+.pill:hover { background: var(--pill-hover); }
+.pill:focus-visible { outline: 2px solid var(--tint); outline-offset: 3px; }
+.pill svg { width: 14px; height: 14px; flex: none; }
+.pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-dim); }
+.pill[aria-pressed="true"] .dot { background: var(--tint); box-shadow: 0 0 8px var(--tint); }
+.pill.waiting { border-color: var(--tint-edge); animation: nudge 2s ease-in-out infinite; }
+@keyframes nudge { 50% { background: var(--tint-soft); } }
+.fs { position: absolute; z-index: 20; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
+
+.status {
+  position: absolute; z-index: 20; left: 50%; transform: translateX(-50%);
+  bottom: calc(26px + env(safe-area-inset-bottom, 0px));
+  font: 500 10.5px/1 var(--font-mono); letter-spacing: .24em; text-transform: uppercase;
+  color: var(--ink-dim); white-space: nowrap;
+}
+.status b { font-weight: 500; color: var(--tint); }
+.hero.final .status b { color: var(--amber); }
+@media (max-width: 720px) { .status { display: none; } }
+@media (max-width: 420px) { .nav-item span { display: none; } .brackets i:nth-child(n+3) { display: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  h1, .num.bump, .flash.go, .pill.waiting { animation: none; }
+  .scan::after { display: none; }
+}
+</style>
+</head>
+<body>
+
+<nav class="nav" aria-label="Site">
+  <div class="nav-in">
+    <span class="badge">GHTW 4.0</span>
+    <div class="nav-right">
+      <span class="nav-item on" aria-current="page">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10.5 12 4l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5.5h-5V20H5a1 1 0 0 1-1-1z"/></svg>
+        <span>Countdown</span>
+      </span>
+      <span class="nav-clock" id="clock" title="Time in India">IST --:--:--</span>
+    </div>
+  </div>
+</nav>
+
+<main class="hero" id="hero">
+  <div class="stage" aria-hidden="true">
+    <div class="grid"></div>
+    <canvas id="core"></canvas>
+  </div>
+  <div class="shade" aria-hidden="true"></div>
+  <div class="scan" aria-hidden="true"></div>
+  <div class="flash" id="flash" aria-hidden="true"></div>
+  <div class="brackets" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+
+  <div class="content">
+    <div class="block">
+      <div class="heading">
+        <h1>GHTW 4.0: Project Inayaat Unfiltered</h1>
+        <p class="sub" id="sub">Sun 11 Oct 2026 · 01:00 AM IST</p>
+      </div>
+      <div class="timer" role="timer" aria-label="Countdown to Sunday 11 October 2026, 1:00 AM India time">
+        <div class="unit"><div class="num" id="d">00</div><div class="lab">Days</div></div>
+        <div class="sep" aria-hidden="true">:</div>
+        <div class="unit"><div class="num" id="h">00</div><div class="lab">Hours</div></div>
+        <div class="sep" aria-hidden="true">:</div>
+        <div class="unit"><div class="num" id="m">00</div><div class="lab">Min</div></div>
+        <div class="sep" aria-hidden="true">:</div>
+        <div class="unit"><div class="num" id="s">00</div><div class="lab">Sec</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dock">
+    <button type="button" class="pill" id="sound" aria-pressed="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path id="wave" d="M16 9.5a3.5 3.5 0 0 1 0 5"/></svg>
+      <span id="soundLabel">Tap anywhere for sound</span>
+    </button>
+    <a class="pill" id="cal" target="_blank" rel="noopener">
+      <span class="dot" aria-hidden="true"></span>
+      <span>Add to Google Calendar</span>
+    </a>
+  </div>
+
+  <button type="button" class="pill fs" id="fs" hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+    <span id="fsLabel">Fullscreen</span>
+  </button>
+
+  <div class="status" aria-hidden="true">Mark-12 · J.A.R.V.I.S · <b id="state">Standing by</b></div>
+</main>
+
+<script>
+(function () {
+  // Sunday 11 October 2026, 01:00 India Standard Time
+  var TARGET = Date.parse('2026-10-11T01:00:00+05:30');
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var hero = document.getElementById('hero');
+
+  /* ---------- Countdown ---------- */
+  var els = { d: document.getElementById('d'), h: document.getElementById('h'), m: document.getElementById('m'), s: document.getElementById('s') };
+  var sub = document.getElementById('sub'), stateEl = document.getElementById('state'), flash = document.getElementById('flash');
+  var clock = document.getElementById('clock');
+  var istFmt = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+  var mode = 'count', booted = false;
+
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function setNum(key, val) {
+    var el = els[key];
+    if (el.textContent === val) return;
+    el.textContent = val;
+    if (booted && !reduce) { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
+  }
+  function setMode(next) {
+    if (next === mode && booted) return;
+    var was = mode; mode = next;
+    hero.classList.toggle('final', next === 'final');
+    hero.classList.toggle('live', next === 'live');
+    stateEl.textContent = next === 'live' ? 'Online' : next === 'final' ? 'Final count' : 'Standing by';
+    if (next === 'live') {
+      sub.textContent = 'Live now · Sun 11 Oct 2026 · 01:00 AM IST';
+      if (booted && was !== 'live') { flash.classList.remove('go'); void flash.offsetWidth; flash.classList.add('go'); boom(); }
+    }
+  }
+  function update() {
+    var now = Date.now(), ms = TARGET - now;
+    clock.textContent = 'IST ' + istFmt.format(new Date(now));
+    if (ms <= 0) {
+      setNum('d', '00'); setNum('h', '00'); setNum('m', '00'); setNum('s', '00');
+      setMode('live');
+    } else {
+      var t = Math.ceil(ms / 1000);
+      setNum('d', pad(Math.floor(t / 86400)));
+      setNum('h', pad(Math.floor(t % 86400 / 3600)));
+      setNum('m', pad(Math.floor(t % 3600 / 60)));
+      setNum('s', pad(t % 60));
+      setMode(t <= 10 ? 'final' : 'count');
+      if (booted) tick(t <= 10);
+    }
+    booted = true;
+    setTimeout(update, ((TARGET - Date.now()) % 1000 + 1000) % 1000 + 8);
+  }
+
+  /* ---------- Calendar link ---------- */
+  var calStart = '20261010T193000Z', calEnd = '20261010T203000Z';
+  document.getElementById('cal').href = 'https://calendar.google.com/calendar/render?action=TEMPLATE'
+    + '&text=' + encodeURIComponent('GHTW 4.0: Project Inayaat Unfiltered')
+    + '&dates=' + calStart + '/' + calEnd
+    + '&details=' + encodeURIComponent('Countdown ends Sunday 11 October 2026, 1:00 AM IST.');
+
+  /* ---------- Fullscreen ---------- */
+  var fsBtn = document.getElementById('fs'), fsLabel = document.getElementById('fsLabel');
+  if (document.fullscreenEnabled && document.documentElement.requestFullscreen) {
+    fsBtn.hidden = false;
+    fsBtn.addEventListener('click', function () {
+      var p = document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+      if (p && p.catch) p.catch(function () { fsBtn.hidden = true; });
+    });
+    document.addEventListener('fullscreenchange', function () { fsLabel.textContent = document.fullscreenElement ? 'Exit fullscreen' : 'Fullscreen'; });
+  }
+
+  /* ---------- Sound: a low reactor hum and a soft tick each second ---------- */
+  var ac = null, master = null, soundOn = true, unlockedAt = -1e9;
+  var soundBtn = document.getElementById('sound'), soundLabel = document.getElementById('soundLabel'), wave = document.getElementById('wave');
+  function initAudio() {
+    var AC = window.AudioContext || window.webkitAudioContext; if (!AC) return false;
+    ac = new AC();
+    ac.onstatechange = renderSound;
+    master = ac.createGain(); master.gain.value = 0; master.connect(ac.destination);
+    var lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 380; lp.Q.value = 0.8; lp.connect(master);
+    [[55, 'sine', 0.55], [82.4, 'triangle', 0.16], [110.6, 'sine', 0.12], [164.8, 'sine', 0.04]].forEach(function (v) {
+      var o = ac.createOscillator(), g = ac.createGain(); o.type = v[1]; o.frequency.value = v[0]; g.gain.value = v[2]; o.connect(g); g.connect(lp); o.start();
+    });
+    var lfo = ac.createOscillator(), lg = ac.createGain(); lfo.frequency.value = 0.09; lg.gain.value = 160; lfo.connect(lg); lg.connect(lp.frequency); lfo.start();
+    return true;
+  }
+  function audible() { return soundOn && ac && ac.state === 'running'; }
+  function tick(final) {
+    if (!audible()) return;
+    var t = ac.currentTime, o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'sine'; o.frequency.value = final ? 1320 : 920;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(final ? 0.16 : 0.05, t + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, t + (final ? 0.16 : 0.08));
+    o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + 0.2);
+  }
+  function boom() {
+    if (!audible()) return;
+    var t = ac.currentTime, o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(90, t); o.frequency.exponentialRampToValueAtTime(32, t + 2.4);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.5, t + 0.03); g.gain.exponentialRampToValueAtTime(0.0001, t + 2.6);
+    o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + 2.7);
+    var s = ac.createOscillator(), sg = ac.createGain();
+    s.type = 'triangle'; s.frequency.setValueAtTime(440, t); s.frequency.exponentialRampToValueAtTime(880, t + 1.2);
+    sg.gain.setValueAtTime(0.0001, t); sg.gain.exponentialRampToValueAtTime(0.06, t + 0.2); sg.gain.exponentialRampToValueAtTime(0.0001, t + 1.8);
+    s.connect(sg); sg.connect(ac.destination); s.start(t); s.stop(t + 1.9);
+  }
+  function renderSound() {
+    var waiting = soundOn && !(ac && ac.state === 'running');
+    soundBtn.setAttribute('aria-pressed', String(soundOn));
+    soundLabel.textContent = !soundOn ? 'Sound OFF' : waiting ? 'Tap anywhere for sound' : 'Sound ON';
+    wave.setAttribute('opacity', soundOn ? '1' : '.35');
+    soundBtn.classList.toggle('waiting', waiting);
+  }
+  function applySound() {
+    if (!ac && !initAudio()) return;
+    if (soundOn && ac.state !== 'running') ac.resume().then(renderSound, renderSound);
+    master.gain.setTargetAtTime(soundOn ? 0.2 : 0, ac.currentTime, 0.35);
+    renderSound();
+  }
+  // Sound is on by default. Browsers hold audio back until the first tap or key press, so the first one starts it.
+  function unlock() {
+    if (!soundOn || (ac && ac.state === 'running')) return;
+    unlockedAt = performance.now();
+    applySound();
+  }
+  ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown'].forEach(function (ev) { window.addEventListener(ev, unlock, true); });
+  soundBtn.addEventListener('click', function () {
+    if (performance.now() - unlockedAt < 700) return; // this tap just started the sound
+    soundOn = !soundOn;
+    applySound();
+  });
+  applySound(); // plays straight away where the browser allows it
+
+  /* ---------- The Mark 12 core: a gyroscopic sphere of golden arcs ---------- */
+  var cv = document.getElementById('core'), ctx = cv.getContext('2d');
+  var GOLD = '#ffb84d', HOT = '#fff3d6', EMBER = '#ff7a45', TINT = '#3dd6f5';
+  function rnd(seed) { var s = seed % 2147483647; if (s <= 0) s += 2147483646; return function () { s = s * 16807 % 2147483647; return (s - 1) / 2147483646; }; }
+  function rgba(hex, a) { var n = parseInt(hex.slice(1), 16); return 'rgba(' + (n >> 16 & 255) + ',' + (n >> 8 & 255) + ',' + (n & 255) + ',' + Math.max(0, Math.min(1, a)).toFixed(3) + ')'; }
+  function coreArcs(n, seed) {
+    var R = rnd(seed), arcs = [];
+    for (var i = 0; i < n; i++) {
+      var nx, ny, nz, kind = i % 5;
+      if (kind === 0) { nx = (R() - 0.5) * 0.3; ny = 1; nz = (R() - 0.5) * 0.3; }
+      else if (kind === 1) { nx = 1; ny = (R() - 0.5) * 0.4; nz = (R() - 0.5) * 0.4; }
+      else { var u1 = R() * 2 - 1, a1 = R() * Math.PI * 2; nx = Math.sqrt(1 - u1 * u1) * Math.cos(a1); ny = u1; nz = Math.sqrt(1 - u1 * u1) * Math.sin(a1); }
+      var nl = Math.hypot(nx, ny, nz); nx /= nl; ny /= nl; nz /= nl;
+      var hx = Math.abs(nx) < 0.9 ? 1 : 0, hy = hx ? 0 : 1;
+      var ux = -nz * hy, uy = nz * hx, uz = nx * hy - ny * hx, ul = Math.hypot(ux, uy, uz); ux /= ul; uy /= ul; uz /= ul;
+      var vx = ny * uz - nz * uy, vy = nz * ux - nx * uz, vz = nx * uy - ny * ux;
+      var outer = i < n * 0.72;
+      arcs.push({ u: [ux, uy, uz], v: [vx, vy, vz], r: outer ? 0.86 + R() * 0.16 : 0.42 + R() * 0.36,
+        a0: R() * Math.PI * 2, len: R() < 0.16 ? Math.PI * 2 : (0.22 + R() * 0.7) * Math.PI * 2,
+        w: outer ? 1 + R() * 1.8 : 0.8 + R(), speed: (R() < 0.5 ? -1 : 1) * (0.25 + R() * 1.1), band: R() < 0.14, hot: R() < 0.35, bright: 0.45 + R() * 0.55 });
+    }
+    return arcs;
+  }
+  var arcs = coreArcs(38, 5), R = rnd(9), sparks = [], dust = [];
+  for (var i = 0; i < 80; i++) sparks.push([R() * Math.PI * 2, R() * Math.PI * 2, 0.92 + R() * 0.5, (R() < 0.5 ? -1 : 1) * (0.4 + R() * 1.4), R()]);
+  var D = rnd(21);
+  for (var j = 0; j < 90; j++) dust.push({ x: D(), y: D(), z: 0.3 + D() * 0.7, ph: D() * Math.PI * 2, gold: D() < 0.18 });
+
+  var W = 0, H = 0, energy = 0.3, spin = 0.4, pulse = 0, spinT = 0, yaw = 0.3, t0 = performance.now(), last = t0;
+  function resize() {
+    var dpr = Math.min(window.devicePixelRatio || 1, 1.5), r = cv.getBoundingClientRect();
+    W = r.width; H = r.height;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    if (reduce) draw(performance.now(), true);
+  }
+  function ease(x) { return 1 - Math.pow(1 - x, 3); }
+
+  function draw(now, still) {
+    var dt = still ? 1 : Math.min(0.05, (now - last) / 1000), t = (now - t0) / 1000; last = now;
+    var eT = mode === 'count' ? 0.62 : mode === 'final' ? 0.92 : 1;
+    var sT = mode === 'count' ? 0.55 : mode === 'final' ? 2.4 : 1.1;
+    var k = Math.min(1, dt * 3);
+    energy += (eT - energy) * k; spin += (sT - spin) * k;
+    var sp = mode === 'live' ? 0.07 * Math.sin(t * 8) + 0.035 * Math.sin(t * 13.7) : 0;
+    pulse += (sp - pulse) * Math.min(1, dt * 12);
+    if (!still) { spinT += dt * spin; yaw += dt * 0.22 * spin; }
+    var grow = still ? 1 : ease(Math.min(1, Math.max(0, (t - 0.15) / 2.6)));
+    var en = Math.max(0, Math.min(1, energy + (mode === 'count' ? 0.08 * Math.sin(t * 1.3) : 0)));
+
+    // slow camera drift, like a held cinematic shot
+    var size = Math.min(W * 0.94, H * 0.82) * (1 + 0.035 * Math.sin(t * 0.09));
+    var cx = W / 2 + Math.sin(t * 0.05) * W * 0.012, cy = H * 0.52 + Math.cos(t * 0.043) * H * 0.012;
+    var rad = size * 0.44 * (1 + pulse + 0.018 * Math.sin(t * 1.6)) * (0.6 + 0.4 * grow);
+    var pitch = 0.32 + 0.08 * Math.sin(t * 0.35), cyw = Math.cos(yaw), syw = Math.sin(yaw), cp = Math.cos(pitch), spn = Math.sin(pitch);
+    var sc = Math.max(1, size / 340);
+
+    ctx.clearRect(0, 0, W, H);
+
+    // drifting dust in the room
+    for (var q = 0; q < dust.length; q++) {
+      var d = dust[q], y = ((d.y - t * 0.006 * d.z) % 1 + 1) % 1, x = d.x * W + Math.sin(t * 0.12 + d.ph) * 18 * d.z;
+      var tw = 0.5 + 0.5 * Math.sin(t * 0.8 + d.ph * 3);
+      ctx.fillStyle = rgba(d.gold ? GOLD : TINT, (0.08 + 0.22 * tw) * d.z * grow);
+      var ds = 1 + d.z * 1.6; ctx.fillRect(x, y * H, ds, ds);
+    }
+
+    var halo = ctx.createRadialGradient(cx, cy, rad * 0.2, cx, cy, rad * 1.6);
+    halo.addColorStop(0, rgba(GOLD, (0.1 + en * 0.2) * grow)); halo.addColorStop(1, rgba(GOLD, 0));
+    ctx.fillStyle = halo; ctx.fillRect(0, 0, W, H);
+
+    ctx.globalCompositeOperation = 'lighter'; ctx.lineCap = 'round';
+    function proj(x, y, z) {
+      var x1 = x * cyw - z * syw, z1 = x * syw + z * cyw, y1 = y * cp - z1 * spn, z2 = y * spn + z1 * cp, f = 1 / (1 + z2 * 0.22);
+      return [cx + x1 * rad * f, cy - y1 * rad * f, z2];
+    }
+    for (var i = 0; i < arcs.length; i++) {
+      var a = arcs[i], ph = a.a0 + a.speed * spinT, len = a.len * grow;
+      if (len < 0.02) continue;
+      var segs = Math.max(8, Math.round(len / (Math.PI * 2) * 96)), pts = [];
+      for (var s = 0; s <= segs; s++) {
+        var ang = ph + len * s / segs, ca = Math.cos(ang) * a.r, sa = Math.sin(ang) * a.r;
+        pts.push(proj(ca * a.u[0] + sa * a.v[0], ca * a.u[1] + sa * a.v[1], ca * a.u[2] + sa * a.v[2]));
+      }
+      var flick = mode === 'final' ? 0.8 + 0.2 * Math.sin(t * 28 + i * 3.1) : 1;
+      for (var ch = 0; ch < 3; ch++) {
+        var s0 = Math.floor(segs * ch / 3), s1 = Math.floor(segs * (ch + 1) / 3); if (s1 <= s0) continue;
+        var zm = (pts[s0][2] + pts[s1][2]) / 2, al = a.bright * (0.22 + 0.72 * en) * (zm < 0 ? 1 : 0.42 + 0.3 * (1 - zm)) * flick;
+        ctx.beginPath(); ctx.moveTo(pts[s0][0], pts[s0][1]);
+        for (var p = s0 + 1; p <= s1; p++) ctx.lineTo(pts[p][0], pts[p][1]);
+        ctx.strokeStyle = rgba(GOLD, al * 0.16); ctx.lineWidth = a.w * 4 * sc; ctx.stroke();
+        ctx.strokeStyle = rgba(GOLD, al); ctx.lineWidth = a.w * sc; ctx.stroke();
+        if (a.hot) { ctx.strokeStyle = rgba(HOT, al * 0.7); ctx.lineWidth = 0.8 * sc; ctx.stroke(); }
+      }
+      if (a.band) {
+        ctx.strokeStyle = rgba(GOLD, 0.35 * en * a.bright); ctx.lineWidth = 0.8 * sc; ctx.beginPath();
+        for (var b = 0; b <= segs; b += 2) {
+          var ang2 = ph + len * b / segs, r2 = a.r * 0.92, c2 = Math.cos(ang2), s2 = Math.sin(ang2);
+          var pin = proj(c2 * r2 * a.u[0] + s2 * r2 * a.v[0], c2 * r2 * a.u[1] + s2 * r2 * a.v[1], c2 * r2 * a.u[2] + s2 * r2 * a.v[2]);
+          ctx.moveTo(pts[b][0], pts[b][1]); ctx.lineTo(pin[0], pin[1]);
+        }
+        ctx.stroke();
+      }
+    }
+    // the beam through the centre
+    var bl = rad * 1.3 * grow, bg = ctx.createLinearGradient(cx - bl, cy, cx + bl, cy);
+    bg.addColorStop(0, rgba(GOLD, 0)); bg.addColorStop(0.5, rgba(HOT, 0.35 + en * 0.4)); bg.addColorStop(1, rgba(GOLD, 0));
+    ctx.strokeStyle = bg; ctx.lineWidth = 1.6 * sc; ctx.beginPath(); ctx.moveTo(cx - bl, cy + rad * 0.04); ctx.lineTo(cx + bl, cy - rad * 0.04); ctx.stroke();
+    // sparks circling the outside
+    for (var e = 0; e < sparks.length; e++) {
+      var sk = sparks[e], th = sk[0] + sk[3] * spinT * 0.8, phi = sk[1], rr = sk[2] * (1 + pulse * 1.5);
+      var pp = proj(Math.cos(th) * Math.sin(phi) * rr, Math.cos(phi) * rr, Math.sin(th) * Math.sin(phi) * rr);
+      var twk = 0.4 + 0.6 * Math.pow(Math.max(0, Math.sin(t * 3 + sk[4] * 20)), 3);
+      ctx.fillStyle = rgba(sk[4] > 0.6 ? EMBER : GOLD, twk * (0.25 + en * 0.6) * (pp[2] < 0 ? 1 : 0.5) * grow);
+      var ss = 1.8 * sc; ctx.fillRect(pp[0] - ss / 2, pp[1] - ss / 2, ss, ss);
+    }
+    // white hot centre
+    var cr = rad * (0.26 + en * 0.08) * (0.4 + 0.6 * grow), cg = ctx.createRadialGradient(cx, cy, 0, cx, cy, cr);
+    cg.addColorStop(0, rgba(HOT, 0.95)); cg.addColorStop(0.3, rgba(GOLD, 0.6 + en * 0.3)); cg.addColorStop(1, rgba(GOLD, 0));
+    ctx.fillStyle = cg; ctx.beginPath(); ctx.arc(cx, cy, cr, 0, Math.PI * 2); ctx.fill();
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  function loop(now) { draw(now, false); requestAnimationFrame(loop); }
+  window.addEventListener('resize', resize);
+  update();
+  resize();
+  if (reduce) draw(performance.now(), true); else requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
