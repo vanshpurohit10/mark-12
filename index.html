@@ -207,36 +207,7 @@ h1 {
 .pill:focus-visible { outline: 2px solid var(--tint); outline-offset: 3px; }
 .pill svg { width: 14px; height: 14px; flex: none; }
 .pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-dim); }
-.pill[aria-pressed="true"] .dot { background: var(--tint); box-shadow: 0 0 8px var(--tint); }
-.pill.waiting { border-color: var(--tint-edge); animation: nudge 2s ease-in-out infinite; }
-@keyframes nudge { 50% { background: var(--tint-soft); } }
 .fs { position: absolute; z-index: 20; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
-
-/* Entry gate: the first tap starts the sound */
-.gate {
-  position: fixed; inset: 0; z-index: 60;
-  display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 14px;
-  padding: 0 16px calc(13vh + env(safe-area-inset-bottom, 0px));
-  background: radial-gradient(ellipse at center, var(--clear) 35%, var(--scrim) 100%), var(--dim);
-  cursor: pointer; transition: opacity .6s ease;
-}
-.gate.out { opacity: 0; pointer-events: none; }
-.gate-btn {
-  display: grid; justify-items: center; gap: 8px;
-  font-family: var(--font-display); color: var(--ink);
-  background: var(--nav); border: 1px solid var(--tint-edge); border-radius: 999px;
-  padding: 16px 30px; cursor: pointer;
-  box-shadow: 0 0 0 0 var(--tint-soft);
-  animation: beacon 2.2s ease-out infinite;
-}
-.gate-btn:focus-visible, .gate-mute:focus-visible { outline: 2px solid var(--tint); outline-offset: 4px; }
-.gate-kicker { font: 500 10px/1 var(--font-mono); letter-spacing: .26em; text-transform: uppercase; color: var(--tint); }
-.gate-title { font: 700 clamp(1rem, 4.2vw, 1.25rem)/1 var(--font-display); letter-spacing: .2em; text-transform: uppercase; padding-left: .2em; }
-.gate-mute {
-  font: 500 12px/1 var(--font-display); color: var(--ink-dim);
-  background: none; border: 0; padding: 8px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px;
-}
-@keyframes beacon { 0% { box-shadow: 0 0 0 0 var(--tint-edge); } 100% { box-shadow: 0 0 0 22px var(--clear); } }
 
 .status {
   position: absolute; z-index: 20; left: 50%; transform: translateX(-50%);
@@ -250,7 +221,7 @@ h1 {
 @media (max-width: 420px) { .nav-item span { display: none; } .brackets i:nth-child(n+3) { display: none; } }
 
 @media (prefers-reduced-motion: reduce) {
-  h1, .num.bump, .flash.go, .pill.waiting, .gate-btn { animation: none; }
+  h1, .num.bump, .flash.go { animation: none; }
   .scan::after { display: none; }
 }
 </style>
@@ -299,10 +270,6 @@ h1 {
   </div>
 
   <div class="dock">
-    <button type="button" class="pill" id="sound" aria-pressed="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path id="wave" d="M16 9.5a3.5 3.5 0 0 1 0 5"/></svg>
-      <span id="soundLabel">Tap anywhere for sound</span>
-    </button>
     <a class="pill" id="cal" target="_blank" rel="noopener">
       <span class="dot" aria-hidden="true"></span>
       <span>Add to Google Calendar</span>
@@ -316,14 +283,6 @@ h1 {
 
   <div class="status" aria-hidden="true">Mark-12 · J.A.R.V.I.S · <b id="state">Standing by</b></div>
 </main>
-
-<div class="gate" id="gate">
-  <button type="button" class="gate-btn" id="enter">
-    <span class="gate-kicker">Sound on</span>
-    <span class="gate-title">Tap to enter</span>
-  </button>
-  <button type="button" class="gate-mute" id="enterMuted">Enter without sound</button>
-</div>
 
 <script>
 (function () {
@@ -395,12 +354,10 @@ h1 {
   }
 
   /* ---------- Sound: a low reactor hum and a soft tick each second ---------- */
-  var ac = null, master = null, soundOn = true, unlockedAt = -1e9;
-  var soundBtn = document.getElementById('sound'), soundLabel = document.getElementById('soundLabel'), wave = document.getElementById('wave');
+  var ac = null, master = null;
   function initAudio() {
     var AC = window.AudioContext || window.webkitAudioContext; if (!AC) return false;
     ac = new AC();
-    ac.onstatechange = renderSound;
     master = ac.createGain(); master.gain.value = 0; master.connect(ac.destination);
     var lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 380; lp.Q.value = 0.8; lp.connect(master);
     [[55, 'sine', 0.55], [82.4, 'triangle', 0.16], [110.6, 'sine', 0.12], [164.8, 'sine', 0.04]].forEach(function (v) {
@@ -409,7 +366,7 @@ h1 {
     var lfo = ac.createOscillator(), lg = ac.createGain(); lfo.frequency.value = 0.09; lg.gain.value = 160; lfo.connect(lg); lg.connect(lp.frequency); lfo.start();
     return true;
   }
-  function audible() { return soundOn && ac && ac.state === 'running'; }
+  function audible() { return ac && ac.state === 'running'; }
   function tick(final) {
     if (!audible()) return;
     var t = ac.currentTime, o = ac.createOscillator(), g = ac.createGain();
@@ -428,47 +385,18 @@ h1 {
     sg.gain.setValueAtTime(0.0001, t); sg.gain.exponentialRampToValueAtTime(0.06, t + 0.2); sg.gain.exponentialRampToValueAtTime(0.0001, t + 1.8);
     s.connect(sg); sg.connect(ac.destination); s.start(t); s.stop(t + 1.9);
   }
-  function renderSound() {
-    var waiting = soundOn && !(ac && ac.state === 'running');
-    soundBtn.setAttribute('aria-pressed', String(soundOn));
-    soundLabel.textContent = !soundOn ? 'Sound OFF' : waiting ? 'Tap anywhere for sound' : 'Sound ON';
-    wave.setAttribute('opacity', soundOn ? '1' : '.35');
-    soundBtn.classList.toggle('waiting', waiting);
-  }
-  function applySound() {
+  // Sound is always on. Browsers hold audio back until the first tap or key press, so that silently starts it.
+  function startSound() {
     if (!ac && !initAudio()) return;
-    if (soundOn && ac.state !== 'running') ac.resume().then(renderSound, renderSound);
-    master.gain.setTargetAtTime(soundOn ? 0.2 : 0, ac.currentTime, 0.35);
-    renderSound();
+    if (ac.state !== 'running') ac.resume().catch(function () {});
+    master.gain.setTargetAtTime(0.2, ac.currentTime, 0.35);
   }
-  // Sound is on by default. Browsers hold audio back until the first tap or key press, so the first one starts it.
-  function unlock(e) {
-    if (e && e.target && e.target.id === 'enterMuted') return;
-    if (!soundOn || (ac && ac.state === 'running')) return;
-    unlockedAt = performance.now();
-    applySound();
+  function unlock() {
+    startSound();
+    if (ac && ac.state === 'running') ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown'].forEach(function (ev) { window.removeEventListener(ev, unlock, true); });
   }
   ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown'].forEach(function (ev) { window.addEventListener(ev, unlock, true); });
-  soundBtn.addEventListener('click', function () {
-    if (performance.now() - unlockedAt < 700) return; // this tap just started the sound
-    soundOn = !soundOn;
-    applySound();
-  });
-  applySound(); // plays straight away where the browser allows it
-
-  // Entry gate: one tap anywhere enters the page and starts the sound
-  var gate = document.getElementById('gate');
-  function closeGate(withSound) {
-    if (gate.classList.contains('out')) return;
-    soundOn = withSound;
-    unlockedAt = performance.now();
-    applySound();
-    gate.classList.add('out');
-    setTimeout(function () { gate.hidden = true; }, 650);
-  }
-  gate.addEventListener('click', function (e) { closeGate(!(e.target && e.target.id === 'enterMuted')); });
-  setTimeout(function () { if (ac && ac.state === 'running') closeGate(true); }, 250); // browser already allows sound
-  try { document.getElementById('enter').focus({ preventScroll: true }); } catch (err) {}
+  startSound(); // plays straight away where the browser allows it
 
   /* ---------- The Mark 12 core: a gyroscopic sphere of golden arcs ---------- */
   var cv = document.getElementById('core'), ctx = cv.getContext('2d');
