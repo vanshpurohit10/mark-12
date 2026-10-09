@@ -12,6 +12,8 @@
   var ac = null;
   function initAudio() {
     var AC = window.AudioContext || window.webkitAudioContext; if (!AC) return false;
+    // iPhone: play as media, so the ring/silent switch doesn't mute the track
+    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
     ac = new AC();
     var bin = atob(TRACK_B64), bytes = new Uint8Array(bin.length);
     for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
