@@ -212,6 +212,32 @@ h1 {
 @keyframes nudge { 50% { background: var(--tint-soft); } }
 .fs { position: absolute; z-index: 20; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
 
+/* Entry gate: the first tap starts the sound */
+.gate {
+  position: fixed; inset: 0; z-index: 60;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 14px;
+  padding: 0 16px calc(13vh + env(safe-area-inset-bottom, 0px));
+  background: radial-gradient(ellipse at center, var(--clear) 35%, var(--scrim) 100%), var(--dim);
+  cursor: pointer; transition: opacity .6s ease;
+}
+.gate.out { opacity: 0; pointer-events: none; }
+.gate-btn {
+  display: grid; justify-items: center; gap: 8px;
+  font-family: var(--font-display); color: var(--ink);
+  background: var(--nav); border: 1px solid var(--tint-edge); border-radius: 999px;
+  padding: 16px 30px; cursor: pointer;
+  box-shadow: 0 0 0 0 var(--tint-soft);
+  animation: beacon 2.2s ease-out infinite;
+}
+.gate-btn:focus-visible, .gate-mute:focus-visible { outline: 2px solid var(--tint); outline-offset: 4px; }
+.gate-kicker { font: 500 10px/1 var(--font-mono); letter-spacing: .26em; text-transform: uppercase; color: var(--tint); }
+.gate-title { font: 700 clamp(1rem, 4.2vw, 1.25rem)/1 var(--font-display); letter-spacing: .2em; text-transform: uppercase; padding-left: .2em; }
+.gate-mute {
+  font: 500 12px/1 var(--font-display); color: var(--ink-dim);
+  background: none; border: 0; padding: 8px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px;
+}
+@keyframes beacon { 0% { box-shadow: 0 0 0 0 var(--tint-edge); } 100% { box-shadow: 0 0 0 22px var(--clear); } }
+
 .status {
   position: absolute; z-index: 20; left: 50%; transform: translateX(-50%);
   bottom: calc(26px + env(safe-area-inset-bottom, 0px));
@@ -224,7 +250,7 @@ h1 {
 @media (max-width: 420px) { .nav-item span { display: none; } .brackets i:nth-child(n+3) { display: none; } }
 
 @media (prefers-reduced-motion: reduce) {
-  h1, .num.bump, .flash.go, .pill.waiting { animation: none; }
+  h1, .num.bump, .flash.go, .pill.waiting, .gate-btn { animation: none; }
   .scan::after { display: none; }
 }
 </style>
@@ -290,6 +316,14 @@ h1 {
 
   <div class="status" aria-hidden="true">Mark-12 · J.A.R.V.I.S · <b id="state">Standing by</b></div>
 </main>
+
+<div class="gate" id="gate">
+  <button type="button" class="gate-btn" id="enter">
+    <span class="gate-kicker">Sound on</span>
+    <span class="gate-title">Tap to enter</span>
+  </button>
+  <button type="button" class="gate-mute" id="enterMuted">Enter without sound</button>
+</div>
 
 <script>
 (function () {
@@ -408,7 +442,8 @@ h1 {
     renderSound();
   }
   // Sound is on by default. Browsers hold audio back until the first tap or key press, so the first one starts it.
-  function unlock() {
+  function unlock(e) {
+    if (e && e.target && e.target.id === 'enterMuted') return;
     if (!soundOn || (ac && ac.state === 'running')) return;
     unlockedAt = performance.now();
     applySound();
@@ -420,6 +455,20 @@ h1 {
     applySound();
   });
   applySound(); // plays straight away where the browser allows it
+
+  // Entry gate: one tap anywhere enters the page and starts the sound
+  var gate = document.getElementById('gate');
+  function closeGate(withSound) {
+    if (gate.classList.contains('out')) return;
+    soundOn = withSound;
+    unlockedAt = performance.now();
+    applySound();
+    gate.classList.add('out');
+    setTimeout(function () { gate.hidden = true; }, 650);
+  }
+  gate.addEventListener('click', function (e) { closeGate(!(e.target && e.target.id === 'enterMuted')); });
+  setTimeout(function () { if (ac && ac.state === 'running') closeGate(true); }, 250); // browser already allows sound
+  try { document.getElementById('enter').focus({ preventScroll: true }); } catch (err) {}
 
   /* ---------- The Mark 12 core: a gyroscopic sphere of golden arcs ---------- */
   var cv = document.getElementById('core'), ctx = cv.getContext('2d');
